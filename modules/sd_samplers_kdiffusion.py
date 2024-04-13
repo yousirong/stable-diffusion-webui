@@ -1,7 +1,7 @@
 import torch
 import inspect
 import k_diffusion.sampling
-from modules import sd_samplers_common, sd_samplers_extra, sd_samplers_cfg_denoiser, sd_schedulers
+from modules import sd_samplers_common, sd_samplers_extra, sd_samplers_cfg_denoiser
 from modules.sd_samplers_cfg_denoiser import CFGDenoiser  # noqa: F401
 from modules.script_callbacks import ExtraNoiseParams, extra_noise_callback
 
@@ -9,23 +9,33 @@ from modules.shared import opts
 import modules.shared as shared
 
 samplers_k_diffusion = [
-    ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
-    ('DPM++ SDE', 'sample_dpmpp_sde', ['k_dpmpp_sde'], {'scheduler': 'karras', "second_order": True, "brownian_noise": True}),
-    ('DPM++ 2M SDE', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde'], {'scheduler': 'exponential', "brownian_noise": True}),
-    ('DPM++ 2M SDE Heun', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun'], {'scheduler': 'exponential', "brownian_noise": True, "solver_type": "heun"}),
-    ('DPM++ 2S a', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a'], {'scheduler': 'karras', "uses_ensd": True, "second_order": True}),
-    ('DPM++ 3M SDE', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde'], {'scheduler': 'exponential', 'discard_next_to_last_sigma': True, "brownian_noise": True}),
+    ('DPM++ 2M Karras', 'sample_dpmpp_2m', ['k_dpmpp_2m_ka'], {'scheduler': 'karras'}),
+    ('DPM++ SDE Karras', 'sample_dpmpp_sde', ['k_dpmpp_sde_ka'], {'scheduler': 'karras', "second_order": True, "brownian_noise": True}),
+    ('DPM++ 2M SDE Exponential', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_exp'], {'scheduler': 'exponential', "brownian_noise": True}),
+    ('DPM++ 2M SDE Karras', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_ka'], {'scheduler': 'karras', "brownian_noise": True}),
     ('Euler a', 'sample_euler_ancestral', ['k_euler_a', 'k_euler_ancestral'], {"uses_ensd": True}),
     ('Euler', 'sample_euler', ['k_euler'], {}),
     ('LMS', 'sample_lms', ['k_lms'], {}),
     ('Heun', 'sample_heun', ['k_heun'], {"second_order": True}),
-    ('DPM2', 'sample_dpm_2', ['k_dpm_2'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "second_order": True}),
-    ('DPM2 a', 'sample_dpm_2_ancestral', ['k_dpm_2_a'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
+    ('DPM2', 'sample_dpm_2', ['k_dpm_2'], {'discard_next_to_last_sigma': True, "second_order": True}),
+    ('DPM2 a', 'sample_dpm_2_ancestral', ['k_dpm_2_a'], {'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
+    ('DPM++ 2S a', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a'], {"uses_ensd": True, "second_order": True}),
+    ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {}),
+    ('DPM++ SDE', 'sample_dpmpp_sde', ['k_dpmpp_sde'], {"second_order": True, "brownian_noise": True}),
+    ('DPM++ 2M SDE', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_ka'], {"brownian_noise": True}),
+    ('DPM++ 2M SDE Heun', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun'], {"brownian_noise": True, "solver_type": "heun"}),
+    ('DPM++ 2M SDE Heun Karras', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun_ka'], {'scheduler': 'karras', "brownian_noise": True, "solver_type": "heun"}),
+    ('DPM++ 2M SDE Heun Exponential', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun_exp'], {'scheduler': 'exponential', "brownian_noise": True, "solver_type": "heun"}),
+    ('DPM++ 3M SDE', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde'], {'discard_next_to_last_sigma': True, "brownian_noise": True}),
+    ('DPM++ 3M SDE Karras', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde_ka'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "brownian_noise": True}),
+    ('DPM++ 3M SDE Exponential', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde_exp'], {'scheduler': 'exponential', 'discard_next_to_last_sigma': True, "brownian_noise": True}),
     ('DPM fast', 'sample_dpm_fast', ['k_dpm_fast'], {"uses_ensd": True}),
     ('DPM adaptive', 'sample_dpm_adaptive', ['k_dpm_ad'], {"uses_ensd": True}),
+    ('LMS Karras', 'sample_lms', ['k_lms_ka'], {'scheduler': 'karras'}),
+    ('DPM2 Karras', 'sample_dpm_2', ['k_dpm_2_ka'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
+    ('DPM2 a Karras', 'sample_dpm_2_ancestral', ['k_dpm_2_a_ka'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
+    ('DPM++ 2S a Karras', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a_ka'], {'scheduler': 'karras', "uses_ensd": True, "second_order": True}),
     ('Restart', sd_samplers_extra.restart_sampler, ['restart'], {'scheduler': 'karras', "second_order": True}),
-    ('DPM++ 2M Test', 'sample_dpmpp_2m_test', ['k_dpmpp_2m'], {}),
-    ('DPM++ 2M Karras Test', 'sample_dpmpp_2m_test', ['k_dpmpp_2m_ka'], {'scheduler': 'karras'}),
 ]
 
 
@@ -34,6 +44,40 @@ samplers_data_k_diffusion = [
     for label, funcname, aliases, options in samplers_k_diffusion
     if callable(funcname) or hasattr(k_diffusion.sampling, funcname)
 ]
+
+from tqdm.auto import trange
+
+@torch.no_grad()
+def sample_dpmpp_2m_alt(model, x, sigmas, extra_args=None, callback=None, disable=None):
+    """DPM-Solver++(2M)."""
+    extra_args = {} if extra_args is None else extra_args
+    s_in = x.new_ones([x.shape[0]])
+    sigma_fn = lambda t: t.neg().exp()
+    t_fn = lambda sigma: sigma.log().neg()
+    old_denoised = None
+
+    for i in trange(len(sigmas) - 1, disable=disable):
+        denoised = model(x, sigmas[i] * s_in, **extra_args)
+        if callback is not None:
+            callback({'x': x, 'i': i, 'sigma': sigmas[i], 'sigma_hat': sigmas[i], 'denoised': denoised})
+        t, t_next = t_fn(sigmas[i]), t_fn(sigmas[i + 1])
+        h = t_next - t
+        if old_denoised is None or sigmas[i + 1] == 0:
+            x = (sigma_fn(t_next) / sigma_fn(t)) * x - (-h).expm1() * denoised
+        else:
+            h_last = t - t_fn(sigmas[i - 1])
+            r = h_last / h
+            denoised_d = (1 + 1 / (2 * r)) * denoised - (1 / (2 * r)) * old_denoised
+            x = (sigma_fn(t_next) / sigma_fn(t)) * x - (-h).expm1() * denoised_d
+        sigma_progress = i / len(sigmas)
+        adjustment_factor = 1 + (0.15 * (sigma_progress * sigma_progress))
+        old_denoised = denoised * adjustment_factor
+    return x
+
+k_diffusion.sampling.sample_dpmpp_2m_alt = sample_dpmpp_2m_alt
+
+samplers_data_k_diffusion.insert(9, sd_samplers_common.SamplerData('DPM++ 2M alt', lambda model: KDiffusionSampler('sample_dpmpp_2m_alt', model), ['k_dpmpp_2m_alt'], {}))
+samplers_data_k_diffusion.insert(10, sd_samplers_common.SamplerData('DPM++ 2M alt Karras', lambda model: KDiffusionSampler('sample_dpmpp_2m_alt', model), ['k_dpmpp_2m_alt_ka'], {'scheduler': 'karras'}))
 
 sampler_extra_params = {
     'sample_euler': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
@@ -48,7 +92,12 @@ sampler_extra_params = {
 }
 
 k_diffusion_samplers_map = {x.name: x for x in samplers_data_k_diffusion}
-k_diffusion_scheduler = {x.name: x.function for x in sd_schedulers.schedulers}
+k_diffusion_scheduler = {
+    'Automatic': None,
+    'karras': k_diffusion.sampling.get_sigmas_karras,
+    'exponential': k_diffusion.sampling.get_sigmas_exponential,
+    'polyexponential': k_diffusion.sampling.get_sigmas_polyexponential
+}
 
 
 class CFGDenoiserKDiffusion(sd_samplers_cfg_denoiser.CFGDenoiser):
@@ -81,43 +130,42 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
 
         steps += 1 if discard_next_to_last_sigma else 0
 
-        scheduler_name = (p.hr_scheduler if p.is_hr_pass else p.scheduler) or 'Automatic'
-        if scheduler_name == 'Automatic':
-            scheduler_name = self.config.options.get('scheduler', None)
-
-        scheduler = sd_schedulers.schedulers_map.get(scheduler_name)
-
-        m_sigma_min, m_sigma_max = self.model_wrap.sigmas[0].item(), self.model_wrap.sigmas[-1].item()
-        sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
-
         if p.sampler_noise_scheduler_override:
             sigmas = p.sampler_noise_scheduler_override(steps)
-        elif scheduler is None or scheduler.function is None:
-            sigmas = self.model_wrap.get_sigmas(steps)
-        else:
-            sigmas_kwargs = {'sigma_min': sigma_min, 'sigma_max': sigma_max}
+        elif opts.k_sched_type != "Automatic":
+            m_sigma_min, m_sigma_max = (self.model_wrap.sigmas[0].item(), self.model_wrap.sigmas[-1].item())
+            sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (m_sigma_min, m_sigma_max)
+            sigmas_kwargs = {
+                'sigma_min': sigma_min,
+                'sigma_max': sigma_max,
+            }
 
-            if scheduler.label != 'Automatic' and not p.is_hr_pass:
-                p.extra_generation_params["Schedule type"] = scheduler.label
-            elif scheduler.label != p.extra_generation_params.get("Schedule type"):
-                p.extra_generation_params["Hires schedule type"] = scheduler.label
+            sigmas_func = k_diffusion_scheduler[opts.k_sched_type]
+            p.extra_generation_params["Schedule type"] = opts.k_sched_type
 
-            if opts.sigma_min != 0 and opts.sigma_min != m_sigma_min:
+            if opts.sigma_min != m_sigma_min and opts.sigma_min != 0:
                 sigmas_kwargs['sigma_min'] = opts.sigma_min
                 p.extra_generation_params["Schedule min sigma"] = opts.sigma_min
-
-            if opts.sigma_max != 0 and opts.sigma_max != m_sigma_max:
+            if opts.sigma_max != m_sigma_max and opts.sigma_max != 0:
                 sigmas_kwargs['sigma_max'] = opts.sigma_max
                 p.extra_generation_params["Schedule max sigma"] = opts.sigma_max
 
-            if scheduler.default_rho != -1 and opts.rho != 0 and opts.rho != scheduler.default_rho:
+            default_rho = 1. if opts.k_sched_type == "polyexponential" else 7.
+
+            if opts.k_sched_type != 'exponential' and opts.rho != 0 and opts.rho != default_rho:
                 sigmas_kwargs['rho'] = opts.rho
                 p.extra_generation_params["Schedule rho"] = opts.rho
 
-            if scheduler.need_inner_model:
-                sigmas_kwargs['inner_model'] = self.model_wrap
+            sigmas = sigmas_func(n=steps, **sigmas_kwargs, device=shared.device)
+        elif self.config is not None and self.config.options.get('scheduler', None) == 'karras':
+            sigma_min, sigma_max = (0.1, 10) if opts.use_old_karras_scheduler_sigmas else (self.model_wrap.sigmas[0].item(), self.model_wrap.sigmas[-1].item())
 
-            sigmas = scheduler.function(n=steps, **sigmas_kwargs, device=shared.device)
+            sigmas = k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=sigma_min, sigma_max=sigma_max, device=shared.device)
+        elif self.config is not None and self.config.options.get('scheduler', None) == 'exponential':
+            m_sigma_min, m_sigma_max = (self.model_wrap.sigmas[0].item(), self.model_wrap.sigmas[-1].item())
+            sigmas = k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=m_sigma_min, sigma_max=m_sigma_max, device=shared.device)
+        else:
+            sigmas = self.model_wrap.get_sigmas(steps)
 
         if discard_next_to_last_sigma:
             sigmas = torch.cat([sigmas[:-2], sigmas[-1:]])
@@ -173,7 +221,8 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
 
         samples = self.launch_sampling(t_enc + 1, lambda: self.func(self.model_wrap_cfg, xi, extra_args=self.sampler_extra_args, disable=False, callback=self.callback_state, **extra_params_kwargs))
 
-        self.add_infotext(p)
+        if self.model_wrap_cfg.padded_cond_uncond:
+            p.extra_generation_params["Pad conds"] = True
 
         return samples
 
@@ -219,8 +268,8 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
 
         samples = self.launch_sampling(steps, lambda: self.func(self.model_wrap_cfg, x, extra_args=self.sampler_extra_args, disable=False, callback=self.callback_state, **extra_params_kwargs))
 
-        self.add_infotext(p)
+        if self.model_wrap_cfg.padded_cond_uncond:
+            p.extra_generation_params["Pad conds"] = True
 
         return samples
-
 
