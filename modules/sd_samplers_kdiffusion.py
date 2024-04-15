@@ -273,3 +273,4 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
 
         return samples
 
+
